@@ -66,9 +66,13 @@ app.use('/getData', (req, res) => {
   });
 });
 
-app.post('/add', (req, res, next) => {
-  console.log({ body: req.body });
-});
+// routes
+const project = require('./src/routes/project');
+
+const router = express.Router();
+router.use('/project', project);
+
+app.use('/api/v1', router);
 
 const PORT = process.env.PORT || 5000;
 
