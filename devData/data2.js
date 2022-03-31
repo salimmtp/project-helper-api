@@ -1,5 +1,5 @@
 // postgrad
-const data = [
+module.exports = [
   'Accounting and finance',
   'Architecture',
   'Business and management',

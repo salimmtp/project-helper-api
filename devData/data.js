@@ -1,5 +1,5 @@
 //undergrad
-const data = [
+module.exports = [
   'Accounting and finance',
   'Allied health professions', //
   'Architecture',
