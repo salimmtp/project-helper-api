@@ -1,7 +1,17 @@
 const { Router } = require('express');
 const router = Router();
-const { register } = require('../controller/account');
+const { register, login, forgotPassword, validateUser, resetPassword } = require('../controller/account');
+const validator = require('../helper/validator');
 
-router.post('/register', register);
+// validation schema rules - Joi Schema
+const vRule = require('../validation_schema/account');
+
+router.post('/register', validator(vRule.register), register);
+router.post('/login', validator(vRule.login), login);
+
+// forgot password
+router.post('/forgotPassword', validator(vRule.forgotPwd), forgotPassword);
+router.get('/validateUser/:token/:email', validator(vRule.validateUser, 'params'), validateUser);
+router.post('/resetPassword', validator(vRule.verifyUser), resetPassword);
 
 module.exports = router;

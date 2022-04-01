@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const router = Router();
-const validator = require('../helper_middleware/validator');
+const validator = require('../helper/validator');
 
 // validation schema rules - Joi Schema
 const vRule = require('../validation_schema/project');

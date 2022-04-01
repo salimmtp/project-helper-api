@@ -78,6 +78,10 @@ router.use('/account', account);
 
 app.use('/api/v1', router);
 
+app.use((req, res) => {
+  res.json({ message: 'no link found' });
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
