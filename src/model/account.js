@@ -5,7 +5,7 @@ exports.verifyUserExist = (email, username) =>
   db.query(`SELECT id,email,name,username FROM users WHERE email = ? OR username = ?;`, [email, username]);
 
 //   add
-exports.regiter = data => db.query(`INSERT INTO users SET ?;`, [data]);
+exports.register = data => db.query(`INSERT INTO users SET ?;`, [data]);
 
 // verify for login, with email
 exports.verifyEmail = email =>
@@ -35,8 +35,8 @@ exports.updateUserToken = async (email, userId, token) => {
 
 // verify token for password update
 exports.verifyToken = (email, token) => {
-  // return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ? AND is_used = 0 `, [email, token]);
-  return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ?`, [email, token]);
+  return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ? AND is_used = 0 `, [email, token]);
+  // return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ?`, [email, token]);
 };
 
 // forgot password - updating password and state of token

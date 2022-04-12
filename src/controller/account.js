@@ -18,15 +18,13 @@ exports.register = async (req, res) => {
 
     if (userData.length) {
       let message = '';
-      console.log(userData[0].email, email);
       if (userData[0].username === username) message = 'Username is not available.';
       if (userData[0].email === email) message = 'Already registered with this email.';
       return res.status(400).json({ message });
     }
     req.body.password = await bcrypt.hash(password, 10);
-    await accountModel.regiter(req.body);
-
-    res.json({ message: 'registration successful.' });
+    await accountModel.register(req.body);
+    res.json({ message: 'registration successful, please login to proceed.' });
   } catch (error) {
     res.status(500).json({ message: 'server error' });
   }
@@ -94,7 +92,7 @@ exports.validateUser = async (req, res) => {
   try {
     const { email, token } = req.params;
     const [isTokenVerified] = await accountModel.verifyToken(email, token);
-    if (!isTokenVerified.length) return res.status(403).json({ message: 'unauthorized user', isTokenVerified });
+    if (!isTokenVerified.length) return res.status(403).json({ message: 'unauthorized user' });
     const expirytime = dayjs(isTokenVerified[0].created_at).add(1, 'day');
     const currentTime = dayjs();
     if (currentTime > expirytime) return res.status(417).json({ message: 'Token expired.' });
@@ -116,9 +114,7 @@ exports.resetPassword = async (req, res) => {
     const expirytime = dayjs(isTokenVerified[0].created_at).add(1, 'day');
     const currentTime = dayjs();
     if (currentTime > expirytime) return res.status(417).json({ message: 'OTP expired.' });
-    console.log({ password });
     const hashedPwd = await bcrypt.hash(password, 10);
-    console.log({ hashedPwd });
     await accountModel.updatePasswordAndTokenState(email, hashedPwd, isTokenVerified[0].id);
 
     return res.json({ message: 'Reset password has completed.' });

@@ -17,7 +17,9 @@ module.exports = {
     email: Joi.string().email().max(128).required()
   },
   validateUser: {
-    token: Joi.string().min(48),
+    token: Joi.string().min(48).required().messages({
+      'string.min': 'invalid token'
+    }),
     email: Joi.string().email().max(128).required()
   },
   verifyUser: {
