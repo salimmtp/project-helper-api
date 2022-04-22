@@ -52,8 +52,9 @@ exports.update = async (req, res) => {
 //           default pagination query values (page:0, limit:10)
 exports.list = async (req, res) => {
   try {
+    const { id } = req.decoded;
     const { limit, page } = req.query;
-    const data = await projectModel.list(page, limit, { ...req.query });
+    const data = await projectModel.list(page, limit, { ...req.query }, id);
     res.json({ message: 'projects', data });
   } catch (e) {
     console.log({ e });
@@ -92,6 +93,42 @@ exports.searchList = async (req, res) => {
       }
     });
   } catch (e) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : GET
+// @desc    : list of bookmarks
+exports.bookmarkList = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { page, limit } = req.query;
+    const data = await projectModel.listBookmark(page, limit, id);
+    res.json({ message: 'bookmark list', data });
+  } catch (error) {
+    console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : bookmarking the project
+exports.bookmark = async (req, res) => {
+  try {
+    const { id: userId } = req.decoded;
+    const { id } = req.body;
+
+    const [isProjectExist] = await projectModel.isProjectExist(id);
+    if (!isProjectExist.length) return res.status(403).json({ message: 'Project id not found' });
+
+    const isExist = await projectModel.isBookmarkExist(userId, id);
+
+    if (isExist) await projectModel.deleteBookmark(userId, id);
+    else await projectModel.addBookmark(userId, id);
+
+    res.json({ message: isExist ? 'removed from bookmark' : 'saved to bookmark' });
+  } catch (error) {
+    console.log({ error });
     res.status(500).json({ message: 'server error' });
   }
 };

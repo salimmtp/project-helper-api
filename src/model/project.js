@@ -23,13 +23,14 @@ exports.add = async (data, department) => {
   }
 };
 
-exports.list = async (page, limit, filter) => {
+exports.list = async (page, limit, filter, usrid = 0) => {
   try {
     let startNum = parseInt(page) * limit;
     const { search = '', level = '', userId = '', department = '' } = filter;
     let searchResultFor = '';
     let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
     GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
+    (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
     (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
     (SELECT COUNT(id) FROM comments c WHERE c.project_id = p.id) as comments,
     (SELECT COUNT(pu.project_id) FROM project_upvotes pu WHERE pu.project_id = p.id) as upvotes 
@@ -37,7 +38,7 @@ exports.list = async (page, limit, filter) => {
     LEFT JOIN deparments d on pd.department_id = d.id 
     LEFT JOIN users u on p.user_id = u.id
     WHERE 1=1`,
-      sqlParams = [];
+      sqlParams = [usrid];
 
     if (search) {
       // let searchP = `%${search}%`;
@@ -82,6 +83,36 @@ exports.list = async (page, limit, filter) => {
     var data_info = { total: totalCount, data: resultInfo, resultFor: searchResultFor };
     return Promise.resolve(data_info);
   } catch (e) {
+    // console.log({ e });
+    return Promise.reject(e);
+  }
+};
+
+exports.listBookmark = async (page, limit, usrid = 0) => {
+  try {
+    let startNum = parseInt(page) * limit;
+    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+    p.created_at,
+    (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
+    (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
+    (SELECT COUNT(id) FROM comments c WHERE c.project_id = p.id) as comments,
+    (SELECT COUNT(pu.project_id) FROM project_upvotes pu WHERE pu.project_id = p.id) as upvotes 
+    FROM bookmarks b 
+    LEFT JOIN projects p ON p.id = b.project_id 
+    LEFT JOIN project_department pd on p.id = pd.project_id 
+    LEFT JOIN users u on p.user_id = u.id 
+    WHERE b.user_id = ?`,
+      sqlParams = [usrid, usrid];
+    sqlQuery += ` GROUP BY p.id`;
+    // console.log({ sqlQuery, sqlParams });
+    const [rows] = await db.query(sqlQuery, sqlParams);
+    let totalCount = rows.length;
+    sqlQuery += ` ORDER BY b.created_at DESC LIMIT ${db.escape(parseInt(limit))} OFFSET ${db.escape(startNum)}`;
+    var [resultInfo] = await db.query(sqlQuery, sqlParams);
+    var data_info = { total: totalCount, data: resultInfo };
+    return Promise.resolve(data_info);
+  } catch (e) {
+    // console.log({ e });
     return Promise.reject(e);
   }
 };
@@ -94,6 +125,8 @@ exports.projectById = projectId =>
     WHERE p.id = ? GROUP BY p.id;`,
     [projectId]
   );
+
+exports.isProjectExist = projectId => db.query(`SELECT id FROM projects WHERE id = ?`, [projectId]);
 
 exports.departments = (search = '') => {
   let sqlQuery = `SELECT id,name FROM deparments WHERE status = 1`,
@@ -116,8 +149,25 @@ exports.searchUsers = search => {
   sqlQuery += ` ORDER BY id DESC LIMIT 5;`;
   return db.query(sqlQuery, sqlParams);
 };
-// db.query(`SELECT * FROM users WHERE name LIKE ? OR username like ? `, [`%${search}%`, `%${search}%`]);
 
-// exports.departmentSearch = (query) => {
-//   db.query(`SELECT id,name FROM deparments WHERE status = 1`);
-// }
+// bookmark
+
+exports.isBookmarkExist = async (userId, projectId) => {
+  try {
+    const [data] = await db.query(`SELECT user_id FROM bookmarks WHERE user_id = ? AND project_id = ?;`, [userId, projectId]);
+    if (data.length) return Promise.resolve(true);
+    else return Promise.resolve(false);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+exports.addBookmark = (userId, projectId) =>
+  db.query(`INSERT INTO bookmarks SET ?;`, [
+    {
+      project_id: projectId,
+      user_id: userId
+    }
+  ]);
+
+exports.deleteBookmark = (userId, projectId) =>
+  db.query(`DELETE FROM bookmarks WHERE user_id = ? AND project_id = ?`, [userId, projectId]);
