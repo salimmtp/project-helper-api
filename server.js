@@ -25,9 +25,10 @@ app.use('/getData', (req, res) => {
 const project = require('./src/routes/project');
 const configData = require('./src/routes/configData');
 const account = require('./src/routes/account');
+const auth = require('./src/middleware/auth');
 
 const router = express.Router();
-router.use('/project', project);
+router.use('/project', auth, project);
 router.use('/config', configData);
 router.use('/account', account);
 
