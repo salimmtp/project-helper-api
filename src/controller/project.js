@@ -78,6 +78,7 @@ exports.projectById = async (req, res) => {
 
     res.json({ message: 'projects', data: data[0][0], comments: data[1] });
   } catch (e) {
+    console.log({ e });
     res.status(500).json({ message: 'server error' });
   }
 };
@@ -103,6 +104,10 @@ exports.searchList = async (req, res) => {
     res.status(500).json({ message: 'server error' });
   }
 };
+
+//  -----------------------------------------------------------------------------------------------------
+//  ----------------------------------- Project related actions -----------------------------------------
+//  -----------------------------------------------------------------------------------------------------
 
 // @method  : GET
 // @desc    : list of bookmarks
@@ -164,7 +169,6 @@ exports.deleletComment = async (req, res) => {
   try {
     const { id: userId } = req.decoded;
     const { id } = req.body;
-    // console.log(id, userId);
     await projectModel.deleteComment(id, userId);
 
     res.json({ message: 'comment removed' });
@@ -174,5 +178,37 @@ exports.deleletComment = async (req, res) => {
   }
 };
 
-// LIST FULL
-// SELECT p.*,GROUP_CONCAT(d.name) as name FROM projects p LEFT JOIN project_department pd on p.id = pd.project_id LEFT JOIN deparments d on pd.department_id = d.id GROUP BY p.id;
+// @method  : POST
+// @desc    : up vote the project
+exports.upVote = async (req, res) => {
+  try {
+    const { id: userId } = req.decoded;
+    const { id } = req.body;
+
+    const [isProjectExist] = await projectModel.isProjectExist(id);
+    if (!isProjectExist.length) return res.status(403).json({ message: 'Project id not found' });
+
+    const isExist = await projectModel.isupVoteExist(userId, id);
+    if (isExist) await projectModel.deleteUpVote(userId, id);
+    else await projectModel.addUpVote(userId, id);
+
+    res.json({ message: isExist ? 'removed' : 'Upvoted the project' });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : Follow user
+exports.followUser = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { user } = req.body;
+    const isExist = await projectModel.isUserFollowingExist(id, user);
+    if (isExist) await projectModel.unfollow(id, user);
+    else await projectModel.follow(id, user);
+    res.json({ message: isExist ? 'unfollowed' : 'Followed' });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};

@@ -34,5 +34,8 @@ module.exports = {
     comment: Joi.string().required().max(299),
     projectId: Joi.number().integer().required(),
     replyTo: Joi.number().integer().optional()
+  },
+  follow: {
+    user: Joi.number().integer().required()
   }
 };
