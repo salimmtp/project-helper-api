@@ -19,13 +19,17 @@ module.exports = {
   bookmark: {
     id: Joi.number().integer().required()
   },
-  list: {
+  explore: {
     page: Joi.number().integer().required(),
     limit: Joi.number().integer().required(),
     search: Joi.string().optional(),
     level: Joi.number().integer().valid(1, 2, 3).optional(),
     userId: Joi.number().integer().optional(),
     department: Joi.number().integer().optional()
+  },
+  list: {
+    page: Joi.number().integer().required(),
+    limit: Joi.number().integer().required()
   },
   search: {
     search: Joi.string().optional()

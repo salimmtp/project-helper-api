@@ -48,13 +48,27 @@ exports.update = async (req, res) => {
 };
 
 // @method : GET
-// @desc   : list of all project based on the query filter
+// @desc   : list of project based on user department selection
 //           default pagination query values (page:0, limit:10)
 exports.list = async (req, res) => {
   try {
     const { id } = req.decoded;
     const { limit, page } = req.query;
-    const data = await projectModel.list(page, limit, { ...req.query }, id);
+    const data = await projectModel.list(page, limit, id);
+    res.json({ message: 'projects', data });
+  } catch (e) {
+    console.log({ e });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method : GET
+// @desc   : list of all project based on the query filter, explore
+exports.explore = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { limit, page } = req.query;
+    const data = await projectModel.search(page, limit, { ...req.query }, id);
     res.json({ message: 'projects', data });
   } catch (e) {
     console.log({ e });
@@ -83,6 +97,25 @@ exports.projectById = async (req, res) => {
   }
 };
 
+// @method : POST
+// @desc   : delete project
+exports.deleteProject = async (req, res) => {
+  try {
+    const { id: projectId } = req.params;
+    const { id: userId } = req.decoded;
+
+    const [isBelong] = await projectModel.isProjectBelongToUser(projectId, userId);
+    // verify project belong to the requesting user
+    if (!isBelong.length) return res.status(403).json({ message: 'permission denied' });
+    await projectModel.delete(isBelong[0].id);
+
+    res.json({ message: 'project deleted' });
+  } catch (e) {
+    console.log({ e });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
 // @method : GET
 // @desc   : auto complete search keyword based on the query passed
 // @return : List of department, users, project max 6 based on the query passed
@@ -91,7 +124,7 @@ exports.searchList = async (req, res) => {
     const { search } = req.query;
     const [departments] = await projectModel.departments(search);
     const [users] = await projectModel.searchUsers(search);
-    const projects = await projectModel.list(0, 6, { search });
+    const projects = await projectModel.search(0, 6, { search });
     res.json({
       message: 'search list',
       data: {
@@ -101,6 +134,20 @@ exports.searchList = async (req, res) => {
       }
     });
   } catch (e) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : GET
+// @desc    : Projects created by user
+exports.myProjects = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { page, limit } = req.query;
+    const data = await projectModel.search(page, limit, { userId: id }, id);
+    res.json({ message: 'My Projects', data });
+  } catch (error) {
+    // console.log({ error });
     res.status(500).json({ message: 'server error' });
   }
 };

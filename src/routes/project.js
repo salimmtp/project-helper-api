@@ -17,14 +17,20 @@ const {
   comment,
   deleletComment,
   upVote,
-  followUser
+  followUser,
+  explore,
+  myProjects,
+  deleteProject
 } = require('../controller/project');
 
 router.post('/add', validator(vRule.add), add);
 router.post('/update', validator(vRule.update), update);
+router.post('/delete/:id', validator(cRule.id, 'params'), deleteProject);
 router.get('/list', validator(vRule.list, 'query'), list);
+router.get('/explore', validator(vRule.explore, 'query'), explore);
 router.get('/list/:id', validator(cRule.id, 'params'), projectById);
 router.get('/searchList', validator(vRule.search, 'query'), searchList);
+router.get('/myProjects', validator(vRule.list, 'query'), myProjects);
 
 // ---------------------- Project related actions ----------------------
 router.post('/bookmark', validator(vRule.bookmark), bookmark);
