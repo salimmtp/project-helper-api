@@ -67,9 +67,16 @@ exports.list = async (req, res) => {
 exports.projectById = async (req, res) => {
   try {
     const { id } = req.params;
-    const [data] = await projectModel.projectById(id);
-    if (!data.length) return res.status(403).json({ message: 'data not found' });
-    res.json({ message: 'projects', data: data[0] });
+    const { id: userId } = req.decoded;
+    const [data] = await projectModel.projectById(id, userId);
+    if (!data[0].length) return res.status(403).json({ message: 'data not found' });
+
+    for (item in data[1]) {
+      let [resultData] = await projectModel.commentReplys(data[1][item].id, userId);
+      data[1][item].replies = resultData;
+    }
+
+    res.json({ message: 'projects', data: data[0][0], comments: data[1] });
   } catch (e) {
     res.status(500).json({ message: 'server error' });
   }
@@ -106,7 +113,7 @@ exports.bookmarkList = async (req, res) => {
     const data = await projectModel.listBookmark(page, limit, id);
     res.json({ message: 'bookmark list', data });
   } catch (error) {
-    console.log({ error });
+    // console.log({ error });
     res.status(500).json({ message: 'server error' });
   }
 };
@@ -128,7 +135,41 @@ exports.bookmark = async (req, res) => {
 
     res.json({ message: isExist ? 'removed from bookmark' : 'saved to bookmark' });
   } catch (error) {
-    console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : commenting to a project
+exports.comment = async (req, res) => {
+  try {
+    const { id: userId } = req.decoded;
+    const { projectId, comment, replyTo = 0 } = req.body;
+
+    const [isProjectExist] = await projectModel.isProjectExist(projectId);
+    if (!isProjectExist.length) return res.status(403).json({ message: 'Project id not found' });
+
+    await projectModel.comment({ comment, project_id: projectId, replyTo, user_id: userId });
+
+    res.json({ message: 'comment successful' });
+  } catch (error) {
+    // console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : comment deletion by id
+exports.deleletComment = async (req, res) => {
+  try {
+    const { id: userId } = req.decoded;
+    const { id } = req.body;
+    // console.log(id, userId);
+    await projectModel.deleteComment(id, userId);
+
+    res.json({ message: 'comment removed' });
+  } catch (error) {
+    // console.log({ error });
     res.status(500).json({ message: 'server error' });
   }
 };

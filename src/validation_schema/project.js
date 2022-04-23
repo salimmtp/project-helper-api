@@ -29,5 +29,10 @@ module.exports = {
   },
   search: {
     search: Joi.string().optional()
+  },
+  comment: {
+    comment: Joi.string().required().max(299),
+    projectId: Joi.number().integer().required(),
+    replyTo: Joi.number().integer().optional()
   }
 };
