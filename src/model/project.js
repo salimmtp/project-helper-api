@@ -173,7 +173,7 @@ exports.projectById = async (projectId, userId) => {
   }
 };
 
-exports.isProjectExist = projectId => db.query(`SELECT id FROM projects WHERE id = ?`, [projectId]);
+exports.isProjectExist = projectId => db.query(`SELECT id,topic,user_id FROM projects WHERE id = ?`, [projectId]);
 exports.isProjectBelongToUser = (projectId, userId) =>
   db.query(`SELECT id FROM projects p WHERE p.id =? AND user_id =?`, [projectId, userId]);
 
@@ -207,7 +207,15 @@ exports.commentReplys = (id, userId) => {
   );
 };
 
-exports.comment = data => db.query(`INSERT INTO comments SET ?`, [data]);
+exports.comment = async (data, notification, notifyUser) => {
+  try {
+    await db.query(`INSERT IGNORE INTO notifications SET ?`, [{ notification, user_id: notifyUser }]);
+    await db.query(`INSERT INTO comments SET ?`, [data]);
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
 
 exports.deleteComment = (id, userId) => db.query(`DELETE FROM comments WHERE id = ? AND user_id = ?`, [id, userId]);
 
@@ -225,13 +233,20 @@ exports.isupVoteExist = async (userId, projectId) => {
   }
 };
 
-exports.addUpVote = (userId, projectId) =>
-  db.query(`INSERT INTO project_upvotes SET ?;`, [
-    {
-      project_id: projectId,
-      user_id: userId
-    }
-  ]);
+exports.addUpVote = async (userId, projectId, notification, notifyUser) => {
+  try {
+    await db.query(`INSERT IGNORE INTO notifications SET ?`, [{ notification, user_id: notifyUser }]);
+    await db.query(`INSERT INTO project_upvotes SET ?;`, [
+      {
+        project_id: projectId,
+        user_id: userId
+      }
+    ]);
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
 
 exports.deleteUpVote = (userId, projectId) =>
   db.query(`DELETE FROM project_upvotes WHERE user_id = ? AND project_id = ?`, [userId, projectId]);

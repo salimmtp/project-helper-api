@@ -160,13 +160,17 @@ exports.myProjects = async (req, res) => {
 // @desc    : commenting to a project
 exports.comment = async (req, res) => {
   try {
-    const { id: userId } = req.decoded;
+    const { id: userId, name } = req.decoded;
     const { projectId, comment, replyTo = 0 } = req.body;
 
     const [isProjectExist] = await projectModel.isProjectExist(projectId);
     if (!isProjectExist.length) return res.status(403).json({ message: 'Project id not found' });
 
-    await projectModel.comment({ comment, project_id: projectId, replyTo, user_id: userId });
+    await projectModel.comment(
+      { comment, project_id: projectId, replyTo, user_id: userId },
+      `${name} commented "${comment}" on your topic: "${isProjectExist[0].topic}".`,
+      isProjectExist[0].user_id
+    );
 
     res.json({ message: 'comment successful' });
   } catch (error) {
@@ -194,7 +198,7 @@ exports.deleletComment = async (req, res) => {
 // @desc    : up vote the project
 exports.upVote = async (req, res) => {
   try {
-    const { id: userId } = req.decoded;
+    const { id: userId, name } = req.decoded;
     const { id } = req.body;
 
     const [isProjectExist] = await projectModel.isProjectExist(id);
@@ -202,7 +206,13 @@ exports.upVote = async (req, res) => {
 
     const isExist = await projectModel.isupVoteExist(userId, id);
     if (isExist) await projectModel.deleteUpVote(userId, id);
-    else await projectModel.addUpVote(userId, id);
+    else
+      await projectModel.addUpVote(
+        userId,
+        id,
+        `${name} upvoted your topic: "${isProjectExist[0].topic}".`,
+        isProjectExist[0].user_id
+      );
 
     res.json({ message: isExist ? 'removed' : 'Upvoted the project' });
   } catch (error) {

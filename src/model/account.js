@@ -70,3 +70,6 @@ exports.listNotifications = async (page, limit, userId) => {
     return Promise.reject(e);
   }
 };
+
+exports.newNotification = userId =>
+  db.query(`SELECT COUNT(id) as count FROM notifications WHERE user_id = ? AND is_read = 0`, [userId]);

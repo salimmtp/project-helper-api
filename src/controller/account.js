@@ -56,3 +56,14 @@ exports.notifications = async (req, res) => {
     res.status(500).json({ message: 'server error' });
   }
 };
+
+exports.newNotifications = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const [data] = await accountModel.newNotification(id);
+    if (!data.length) return res.status(403).json({ message: 'User not found' });
+    res.json({ notification: data[0].count, message: 0 });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
