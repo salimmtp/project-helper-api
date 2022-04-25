@@ -156,41 +156,6 @@ exports.myProjects = async (req, res) => {
 //  ----------------------------------- Project related actions -----------------------------------------
 //  -----------------------------------------------------------------------------------------------------
 
-// @method  : GET
-// @desc    : list of bookmarks
-exports.bookmarkList = async (req, res) => {
-  try {
-    const { id } = req.decoded;
-    const { page, limit } = req.query;
-    const data = await projectModel.listBookmark(page, limit, id);
-    res.json({ message: 'bookmark list', data });
-  } catch (error) {
-    // console.log({ error });
-    res.status(500).json({ message: 'server error' });
-  }
-};
-
-// @method  : POST
-// @desc    : bookmarking the project
-exports.bookmark = async (req, res) => {
-  try {
-    const { id: userId } = req.decoded;
-    const { id } = req.body;
-
-    const [isProjectExist] = await projectModel.isProjectExist(id);
-    if (!isProjectExist.length) return res.status(403).json({ message: 'Project id not found' });
-
-    const isExist = await projectModel.isBookmarkExist(userId, id);
-
-    if (isExist) await projectModel.deleteBookmark(userId, id);
-    else await projectModel.addBookmark(userId, id);
-
-    res.json({ message: isExist ? 'removed from bookmark' : 'saved to bookmark' });
-  } catch (error) {
-    res.status(500).json({ message: 'server error' });
-  }
-};
-
 // @method  : POST
 // @desc    : commenting to a project
 exports.comment = async (req, res) => {
@@ -249,13 +214,14 @@ exports.upVote = async (req, res) => {
 // @desc    : Follow user
 exports.followUser = async (req, res) => {
   try {
-    const { id } = req.decoded;
+    const { id, name } = req.decoded;
     const { user } = req.body;
     const isExist = await projectModel.isUserFollowingExist(id, user);
     if (isExist) await projectModel.unfollow(id, user);
-    else await projectModel.follow(id, user);
+    else await projectModel.follow(id, user, `${name} has started following you.`);
     res.json({ message: isExist ? 'unfollowed' : 'Followed' });
   } catch (error) {
+    console.log({ error });
     res.status(500).json({ message: 'server error' });
   }
 };

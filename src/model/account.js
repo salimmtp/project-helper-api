@@ -1,66 +1,72 @@
 const db = require('../util/db');
 
-// registration
-exports.verifyUserExist = (email, username) =>
-  db.query(`SELECT id,email,name,username FROM users WHERE email = ? OR username = ?;`, [email, username]);
-
-//   add
-exports.register = data => db.query(`INSERT INTO users SET ?;`, [data]);
-
-// verify for login, with email
-exports.verifyEmail = email =>
-  db.query(`SELECT id,name,email,username,password,level,department FROM users WHERE email=?;`, [email]);
-
-// forgot password token generation
-exports.updateUserToken = async (email, userId, token) => {
+// bookmark
+exports.listBookmark = async (page, limit, usrid = 0) => {
   try {
-    console.log(email, userId, token);
-    const [data] = await db.query(`SELECT id FROM user_tokens WHERE email=? and user_id=?`, [email, userId, token]);
-    if (data.length) {
-      let tokenData = { token, is_used: 0, created_at: new Date() };
-      await db.query(`UPDATE user_tokens SET ? WHERE id =?`, [tokenData, data[0].id]);
-    } else {
-      let tokenData = {
-        email,
-        token,
-        user_id: userId
-      };
-      await db.query(`INSERT INTO user_tokens SET ?`, [tokenData]);
-    }
-    return Promise.resolve(true);
+    let startNum = parseInt(page) * limit;
+    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+      p.created_at,
+      (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
+      (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
+      (SELECT COUNT(id) FROM comments c WHERE c.project_id = p.id) as comments,
+      (SELECT COUNT(pu.project_id) FROM project_upvotes pu WHERE pu.project_id = p.id) as upvotes 
+      FROM bookmarks b 
+      LEFT JOIN projects p ON p.id = b.project_id 
+      LEFT JOIN project_department pd on p.id = pd.project_id 
+      LEFT JOIN users u on p.user_id = u.id 
+      WHERE b.user_id = ?`,
+      sqlParams = [usrid, usrid];
+    sqlQuery += ` GROUP BY p.id`;
+    // console.log({ sqlQuery, sqlParams });
+    const [rows] = await db.query(sqlQuery, sqlParams);
+    let totalCount = rows.length;
+    sqlQuery += ` ORDER BY b.created_at DESC LIMIT ${db.escape(parseInt(limit))} OFFSET ${db.escape(startNum)}`;
+    var [resultInfo] = await db.query(sqlQuery, sqlParams);
+    var data_info = { total: totalCount, data: resultInfo };
+    return Promise.resolve(data_info);
+  } catch (e) {
+    // console.log({ e });
+    return Promise.reject(e);
+  }
+};
+
+exports.isBookmarkExist = async (userId, projectId) => {
+  try {
+    const [data] = await db.query(`SELECT user_id FROM bookmarks WHERE user_id = ? AND project_id = ?;`, [userId, projectId]);
+    if (data.length) return Promise.resolve(true);
+    else return Promise.resolve(false);
   } catch (error) {
     return Promise.reject(error);
   }
 };
 
-// verify token for password update
-exports.verifyToken = (email, token) => {
-  return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ? AND is_used = 0 `, [email, token]);
-  // return db.query(`SELECT * FROM user_tokens WHERE email= ? AND token = ?`, [email, token]);
-};
+exports.addBookmark = (userId, projectId) =>
+  db.query(`INSERT INTO bookmarks SET ?;`, [
+    {
+      project_id: projectId,
+      user_id: userId
+    }
+  ]);
 
-// forgot password - updating password and state of token
-exports.updatePasswordAndTokenState = async (email, password, tokenId) => {
+exports.deleteBookmark = (userId, projectId) =>
+  db.query(`DELETE FROM bookmarks WHERE user_id = ? AND project_id = ?`, [userId, projectId]);
+
+// notifications
+exports.listNotifications = async (page, limit, userId) => {
   try {
-    const conn = await db.getConnection();
-    await conn.query('START TRANSACTION');
-
-    const pwdData = {
-      password
-    };
-    await conn.query(`UPDATE users SET ? WHERE email = ?;`, [pwdData, email]);
-
-    const tokenData = {
-      is_used: 1
-    };
-    await conn.query(`UPDATE user_tokens SET ? WHERE id = ?`, [tokenData, tokenId]);
-
-    await conn.commit();
-    await conn.release();
-    return Promise.resolve(true);
+    let startNum = parseInt(page) * limit;
+    let sqlQuery = `SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT ${db.escape(
+      parseInt(limit)
+    )} OFFSET ${db.escape(startNum)}`;
+    sqlParams = [userId];
+    const [rows] = await db.query(`SELECT COUNT(id) as count FROM notifications WHERE user_id = ?;`, sqlParams);
+    let totalCount = rows[0].count;
+    var [resultInfo] = await db.query(sqlQuery, sqlParams);
+    await db.query(`UPDATE notifications SET ? WHERE user_id = ?`, [{ is_read: 1 }, userId]);
+    var data_info = { total: totalCount, data: resultInfo };
+    return Promise.resolve(data_info);
   } catch (e) {
-    await conn.query('ROLLBACK');
-    await conn.release();
+    console.log({ e });
     return Promise.reject(e);
   }
 };

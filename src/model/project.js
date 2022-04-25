@@ -141,35 +141,6 @@ exports.search = async (page, limit, filter, usrid = 0) => {
   }
 };
 
-exports.listBookmark = async (page, limit, usrid = 0) => {
-  try {
-    let startNum = parseInt(page) * limit;
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
-    p.created_at,
-    (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
-    (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
-    (SELECT COUNT(id) FROM comments c WHERE c.project_id = p.id) as comments,
-    (SELECT COUNT(pu.project_id) FROM project_upvotes pu WHERE pu.project_id = p.id) as upvotes 
-    FROM bookmarks b 
-    LEFT JOIN projects p ON p.id = b.project_id 
-    LEFT JOIN project_department pd on p.id = pd.project_id 
-    LEFT JOIN users u on p.user_id = u.id 
-    WHERE b.user_id = ?`,
-      sqlParams = [usrid, usrid];
-    sqlQuery += ` GROUP BY p.id`;
-    // console.log({ sqlQuery, sqlParams });
-    const [rows] = await db.query(sqlQuery, sqlParams);
-    let totalCount = rows.length;
-    sqlQuery += ` ORDER BY b.created_at DESC LIMIT ${db.escape(parseInt(limit))} OFFSET ${db.escape(startNum)}`;
-    var [resultInfo] = await db.query(sqlQuery, sqlParams);
-    var data_info = { total: totalCount, data: resultInfo };
-    return Promise.resolve(data_info);
-  } catch (e) {
-    // console.log({ e });
-    return Promise.reject(e);
-  }
-};
-
 exports.projectById = async (projectId, userId) => {
   try {
     // project views
@@ -228,29 +199,6 @@ exports.searchUsers = search => {
   return db.query(sqlQuery, sqlParams);
 };
 
-// bookmark
-
-exports.isBookmarkExist = async (userId, projectId) => {
-  try {
-    const [data] = await db.query(`SELECT user_id FROM bookmarks WHERE user_id = ? AND project_id = ?;`, [userId, projectId]);
-    if (data.length) return Promise.resolve(true);
-    else return Promise.resolve(false);
-  } catch (error) {
-    return Promise.reject(error);
-  }
-};
-
-exports.addBookmark = (userId, projectId) =>
-  db.query(`INSERT INTO bookmarks SET ?;`, [
-    {
-      project_id: projectId,
-      user_id: userId
-    }
-  ]);
-
-exports.deleteBookmark = (userId, projectId) =>
-  db.query(`DELETE FROM bookmarks WHERE user_id = ? AND project_id = ?`, [userId, projectId]);
-
 // Comments
 exports.commentReplys = (id, userId) => {
   return db.query(
@@ -302,13 +250,20 @@ exports.isUserFollowingExist = async (userId, user) => {
   }
 };
 
-exports.follow = (userId, user) =>
-  db.query(`INSERT INTO user_following SET ?;`, [
-    {
-      user_id: userId,
-      following_user_id: user
-    }
-  ]);
+exports.follow = async (userId, user, notification) => {
+  try {
+    await db.query(`INSERT IGNORE INTO notifications SET ?`, [{ notification, user_id: user }]);
+    await db.query(`INSERT  INTO user_following SET ?;`, [
+      {
+        user_id: userId,
+        following_user_id: user
+      }
+    ]);
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
 
 exports.unfollow = (userId, user) =>
   db.query(`DELETE FROM user_following WHERE user_id = ? AND following_user_id = ?`, [userId, user]);

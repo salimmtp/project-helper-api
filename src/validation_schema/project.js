@@ -16,9 +16,6 @@ module.exports = {
     level: Joi.number().integer().valid(1, 2, 3).required(),
     skills: Joi.string()
   },
-  bookmark: {
-    id: Joi.number().integer().required()
-  },
   explore: {
     page: Joi.number().integer().required(),
     limit: Joi.number().integer().required(),

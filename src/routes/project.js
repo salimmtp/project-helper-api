@@ -33,9 +33,6 @@ router.get('/searchList', validator(vRule.search, 'query'), searchList);
 router.get('/myProjects', validator(vRule.list, 'query'), myProjects);
 
 // ---------------------- Project related actions ----------------------
-router.post('/bookmark', validator(vRule.bookmark), bookmark);
-router.get('/bookmarkList', validator(vRule.list, 'query'), bookmarkList);
-
 router.post('/comment', validator(vRule.comment), comment);
 router.post('/deleteComment', validator(cRule.id), deleletComment);
 

@@ -1,17 +1,16 @@
 const { Router } = require('express');
 const router = Router();
-const { register, login, forgotPassword, validateUser, resetPassword } = require('../controller/account');
+const { bookmark, bookmarkList, notifications } = require('../controller/account');
 const validator = require('../helper/validator');
 
 // validation schema rules - Joi Schema
 const vRule = require('../validation_schema/account');
 
-router.post('/register', validator(vRule.register), register);
-router.post('/login', validator(vRule.login), login);
+// Bookmarks
+router.post('/bookmark', validator(vRule.bookmark), bookmark);
+router.get('/bookmarkList', validator(vRule.list, 'query'), bookmarkList);
 
-// forgot password
-router.post('/forgotPassword', validator(vRule.forgotPwd), forgotPassword);
-router.get('/validateUser/:token/:email', validator(vRule.validateUser, 'params'), validateUser);
-router.post('/resetPassword', validator(vRule.verifyUser), resetPassword);
+// Notifications
+router.get('/notifications', validator(vRule.list, 'query'), notifications);
 
 module.exports = router;
