@@ -1,5 +1,45 @@
 const db = require('../util/db');
 
+// account update
+exports.getUserData = id =>
+  db.query(
+    `SELECT u.id,u.email,u.name,u.username,u.level,u.bio,GROUP_CONCAT(ud.department_id) as department FROM users u LEFT JOIN user_department ud on ud.user_id = u.id WHERE u.id = ? GROUP BY ud.user_id;`,
+    [id]
+  );
+
+// Update
+exports.updateAccount = async (data, id) => {
+  try {
+    await db.query(`UPDATE users SET ? WHERE id = ?`, [
+      {
+        name: data.name,
+        bio: data.bio
+      },
+      id
+    ]);
+
+    const insertDept = data.department.map(departmentId => {
+      return [id, departmentId];
+    });
+    await db.query('INSERT IGNORE INTO user_department (user_id, department_id) VALUES ?;', [insertDept]);
+    await db.query('DELETE FROM user_department WHERE user_id = ? AND department_id NOT IN (?)', [id, data.department]);
+    return Promise.resolve(true);
+  } catch (error) {
+    console.log({ error });
+    return Promise.reject(error);
+  }
+};
+
+// update password
+// Update
+exports.updatePwd = (password, id) =>
+  db.query(`UPDATE users SET ? WHERE id = ?`, [
+    {
+      password
+    },
+    id
+  ]);
+
 // bookmark
 exports.listBookmark = async (page, limit, usrid = 0) => {
   try {

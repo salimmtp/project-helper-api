@@ -1,6 +1,50 @@
 const accountModel = require('../model/account');
 const projectModel = require('../model/project');
 const dayjs = require('dayjs');
+const bcrypt = require('bcrypt');
+//  ---------------------------------------------------------------------------------------------
+//  --------------------------------------- Account Update --------------------------------------
+//  ---------------------------------------------------------------------------------------------
+// @method  : GET
+// @desc    : user data for update purpose
+exports.getUserData = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const [userData] = await accountModel.getUserData(id);
+    if (!userData.length) return res.status(403).json({ message: 'user not found' });
+    const [departments] = await projectModel.departments();
+    res.json({ message: 'account info', data: userData[0], departments });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : update account
+exports.accountUpdate = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    await accountModel.updateAccount(req.body, id);
+    const [userData] = await accountModel.getUserData(id);
+    res.json({ message: 'Account updated.', data: userData[0] });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+// @method  : POST
+// @desc    : password update
+exports.passwordUpdate = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { password } = req.body;
+    let hashedPwd = await bcrypt.hash(password, 10);
+    await accountModel.updatePwd(hashedPwd, id);
+    res.json({ message: 'Password Updated' });
+  } catch (error) {
+    res.status(500).json({ message: 'server error' });
+  }
+};
 
 //  ---------------------------------------------------------------------------------------------
 //  ------------------------------------------ Bookmarks ----------------------------------------
