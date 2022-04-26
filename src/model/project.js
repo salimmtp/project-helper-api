@@ -51,7 +51,7 @@ exports.list = async (page, limit, usrid = 0) => {
   try {
     let startNum = parseInt(page) * limit;
     let searchResultFor = '';
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,
     GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
     (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
     (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
@@ -81,7 +81,7 @@ exports.search = async (page, limit, filter, usrid = 0) => {
     let startNum = parseInt(page) * limit;
     const { search = '', level = '', userId = '', department = '' } = filter;
     let searchResultFor = '';
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,
     GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
     (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
     (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
@@ -144,7 +144,7 @@ exports.search = async (page, limit, filter, usrid = 0) => {
 exports.followingProjectList = async (page, limit, usrid = 0) => {
   try {
     let startNum = parseInt(page) * limit;
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,
     GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
     (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
     (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
@@ -183,7 +183,7 @@ exports.projectById = async (projectId, userId) => {
         }
       ]);
     }
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,p.skills,p.user_id,
+    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,p.skills,p.user_id,
       GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
       (SELECT COUNT(pu.user_id) as count FROM project_upvotes pu WHERE pu.user_id = p.user_id) as totalReputation,
       u.level,

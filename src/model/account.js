@@ -44,7 +44,7 @@ exports.updatePwd = (password, id) =>
 exports.listBookmark = async (page, limit, usrid = 0) => {
   try {
     let startNum = parseInt(page) * limit;
-    let sqlQuery = `SELECT p.id,p.topic,p.description,u.name,u.username,
+    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,
       p.created_at,
       (SELECT b.user_id FROM bookmarks b WHERE b.user_id = ? AND project_id = p.id) as isBookmarked,
       (SELECT COUNT(pv.project_id) FROM project_views pv WHERE pv.project_id = p.id) as views,
