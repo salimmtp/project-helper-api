@@ -12,15 +12,14 @@ const {
   list,
   projectById,
   searchList,
-  bookmark,
-  bookmarkList,
   comment,
   deleletComment,
   upVote,
   followUser,
   explore,
   myProjects,
-  deleteProject
+  deleteProject,
+  followingUserProjectList
 } = require('../controller/project');
 
 router.post('/add', validator(vRule.add), add);
@@ -31,6 +30,7 @@ router.get('/explore', validator(vRule.explore, 'query'), explore);
 router.get('/list/:id', validator(cRule.id, 'params'), projectById);
 router.get('/searchList', validator(vRule.search, 'query'), searchList);
 router.get('/myProjects', validator(vRule.list, 'query'), myProjects);
+router.get('/followUserProjects', validator(vRule.list, 'query'), followingUserProjectList);
 
 // ---------------------- Project related actions ----------------------
 router.post('/comment', validator(vRule.comment), comment);

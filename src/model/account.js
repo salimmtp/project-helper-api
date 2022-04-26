@@ -73,3 +73,26 @@ exports.listNotifications = async (page, limit, userId) => {
 
 exports.newNotification = userId =>
   db.query(`SELECT COUNT(id) as count FROM notifications WHERE user_id = ? AND is_read = 0`, [userId]);
+
+// following
+exports.followings = async (page, limit, userId) => {
+  try {
+    let startNum = parseInt(page) * limit;
+    let sqlQuery = `SELECT id,name,username,level,bio,(SELECT COUNT(pu.user_id) as count FROM project_upvotes pu WHERE pu.user_id = uf.following_user_id) as totalReputation 
+    FROM user_following uf LEFT JOIN users u on u.id = uf.following_user_id WHERE uf.user_id = ? ORDER BY uf.created_at DESC LIMIT ${db.escape(
+      parseInt(limit)
+    )} OFFSET ${db.escape(startNum)}`;
+    sqlParams = [userId];
+    const [rows] = await db.query(
+      `SELECT COUNT(id) as count FROM user_following uf LEFT JOIN users u on u.id = uf.following_user_id WHERE uf.user_id = ?`,
+      sqlParams
+    );
+    let totalCount = rows[0].count;
+    var [resultInfo] = await db.query(sqlQuery, sqlParams);
+    var data_info = { total: totalCount, data: resultInfo };
+    return Promise.resolve(data_info);
+  } catch (e) {
+    console.log({ e });
+    return Promise.reject(e);
+  }
+};

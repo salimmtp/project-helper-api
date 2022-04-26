@@ -67,3 +67,20 @@ exports.newNotifications = async (req, res) => {
     res.status(500).json({ message: 'server error' });
   }
 };
+
+//  ---------------------------------------------------------------------------------------------
+//  ---------------------------------------- Following ------------------------------------------
+//  ---------------------------------------------------------------------------------------------
+// @method  : GET
+// @desc    : list of followings
+exports.followings = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { page, limit } = req.query;
+    const data = await accountModel.followings(page, limit, id);
+    res.json({ message: 'following list', data });
+  } catch (error) {
+    // console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};

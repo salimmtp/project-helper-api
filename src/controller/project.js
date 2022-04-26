@@ -235,3 +235,17 @@ exports.followUser = async (req, res) => {
     res.status(500).json({ message: 'server error' });
   }
 };
+
+// @method : GET
+// @desc   : list of all project based on the query filter, explore
+exports.followingUserProjectList = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { limit, page } = req.query;
+    const data = await projectModel.followingProjectList(page, limit, id);
+    res.json({ message: 'projects', data });
+  } catch (e) {
+    console.log({ e });
+    res.status(500).json({ message: 'server error' });
+  }
+};
