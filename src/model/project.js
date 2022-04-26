@@ -183,7 +183,7 @@ exports.projectById = async (projectId, userId) => {
         }
       ]);
     }
-    let sqlQuery = `SELECT p.id,p.topic as title,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,p.skills,p.user_id,
+    let sqlQuery = `SELECT p.id,p.topic,SUBSTRING_INDEX(p.description, ' ', 100) as description,u.name,u.username,p.skills,p.user_id,
       GROUP_CONCAT(d.id) departments,GROUP_CONCAT(d.name) as departments_name,p.created_at,
       (SELECT COUNT(pu.user_id) as count FROM project_upvotes pu WHERE pu.user_id = p.user_id) as totalReputation,
       u.level,
