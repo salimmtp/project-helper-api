@@ -89,7 +89,7 @@ exports.projectById = async (req, res) => {
       let [resultData] = await projectModel.commentReplys(data[1][item].id, userId);
       data[1][item].replies = resultData;
     }
-
+    console.log({ d: data[0][0] });
     res.json({ message: 'projects', data: data[0][0], comments: data[1] });
   } catch (e) {
     console.log({ e });
