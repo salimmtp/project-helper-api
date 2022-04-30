@@ -37,7 +37,7 @@ router.use('/auth', authRoutes);
 app.use('/api/v1', router);
 
 app.use((req, res) => {
-  res.json({ message: 'API is running' });
+  res.json({ message: 'API server is running' });
 });
 
 const PORT = process.env.PORT || 5000;
