@@ -114,6 +114,22 @@ exports.listNotifications = async (page, limit, userId) => {
 exports.newNotification = userId =>
   db.query(`SELECT COUNT(id) as count FROM notifications WHERE user_id = ? AND is_read = 0`, [userId]);
 
+// messages
+exports.messageList = userId =>
+  db.query(
+    `SELECT m1.from_user_id,(SELECT u.name FROM users u WHERE u.id = m1.from_user_id LIMIT 1) as fromUser, m1.message, m1.created_at  FROM messages m1 LEFT JOIN messages m2
+    ON (m1.to_user_id = m2.to_user_id AND m1.id < m2.id)
+   WHERE m2.id IS NULL AND m1.to_user_id=? ORDER BY m1.id DESC;`,
+    [userId]
+  );
+
+exports.messageListByUserId = (from, to) =>
+  db.query(
+    `SELECT m.* FROM messages m WHERE (m.from_user_id = ? AND m.to_user_id = ?) OR (m.from_user_id = ? AND m.to_user_id = ?);
+    SELECT id,name,username FROM users u WHERE u.id = ?`,
+    [from, to, to, from, from]
+  );
+
 // following
 exports.followings = async (page, limit, userId) => {
   try {

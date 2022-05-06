@@ -5,10 +5,12 @@ const {
   bookmarkList,
   notifications,
   newNotifications,
+  messageList,
   followings,
   getUserData,
   accountUpdate,
-  passwordUpdate
+  passwordUpdate,
+  messageListByUserId
 } = require('../controller/account');
 const validator = require('../helper/validator');
 
@@ -24,6 +26,10 @@ router.get('/following', validator(vRule.list, 'query'), followings);
 
 // Notifications
 router.get('/notifications', validator(vRule.list, 'query'), notifications);
+
+// Messages
+router.get('/messages', messageList);
+router.get('/messages/:id', messageListByUserId);
 
 // account update
 router.get('/user', getUserData);

@@ -113,6 +113,34 @@ exports.newNotifications = async (req, res) => {
 };
 
 //  ---------------------------------------------------------------------------------------------
+//  --------------------------------------- Messages -------------------------------------------
+//  ---------------------------------------------------------------------------------------------
+
+// @desc Get message list
+exports.messageList = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const [data] = await accountModel.messageList(id);
+    res.json({ message: 'Messages list', data });
+  } catch (error) {
+    console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+// @desc Get message list by user id
+exports.messageListByUserId = async (req, res) => {
+  try {
+    const { id } = req.decoded;
+    const { id: userId } = req.params;
+    const [data] = await accountModel.messageListByUserId(userId, id);
+    res.json({ message: 'Messages list', data: { user: data[1]?.[0], messages: data[0] } });
+  } catch (error) {
+    console.log({ error });
+    res.status(500).json({ message: 'server error' });
+  }
+};
+
+//  ---------------------------------------------------------------------------------------------
 //  ---------------------------------------- Following ------------------------------------------
 //  ---------------------------------------------------------------------------------------------
 // @method  : GET
